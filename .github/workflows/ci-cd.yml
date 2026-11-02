@@ -42,9 +42,9 @@ jobs:
           python manage.py test -v 2
 
   deploy:
-    name: Deploy to Production VPS (Conditional on SSH Secrets)
+    name: Deploy to Production VPS (When SSH Secrets Configured)
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.SSH_HOST != ''
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -54,6 +54,10 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
         run: |
+          if [ -z "$SSH_HOST" ] || [ -z "$SSH_USER" ] || [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "Production SSH secrets (SSH_HOST, SSH_USER, SSH_PRIVATE_KEY) not configured yet; skipping remote SSH step."
+            exit 0
+          fi
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
