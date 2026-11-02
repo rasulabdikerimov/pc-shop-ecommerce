@@ -117,10 +117,12 @@ python manage.py test -v 2
 ## Production Deployment Overview
 
 Complete production configuration files are located in the [`deploy/`](file:///d:/Python/django/shop_pc/deploy) directory:
+- [`deploy/provision_and_deploy.sh`](file:///d:/Python/django/shop_pc/deploy/provision_and_deploy.sh) — Automated 12-step Ubuntu LTS server provisioning, hardening, and deployment installer
 - [`deploy/gunicorn.conf.py`](file:///d:/Python/django/shop_pc/deploy/gunicorn.conf.py) — Gunicorn WSGI server configuration
 - [`deploy/shop_pc.service`](file:///d:/Python/django/shop_pc/deploy/shop_pc.service) — systemd service unit for automatic process management
-- [`deploy/nginx_shop_pc.conf`](file:///d:/Python/django/shop_pc/deploy/nginx_shop_pc.conf) — Nginx reverse proxy, canonical domain redirect, and SSL configuration
-- [`deploy/backup_db.sh`](file:///d:/Python/django/shop_pc/deploy/backup_db.sh) — Automated daily PostgreSQL and media backup script
+- [`deploy/nginx_shop_pc.conf`](file:///d:/Python/django/shop_pc/deploy/nginx_shop_pc.conf) — Nginx reverse proxy, Gzip, canonical domain redirect, and SSL configuration
+- [`deploy/backup_db.sh`](file:///d:/Python/django/shop_pc/deploy/backup_db.sh) — Automated daily (7-day) & weekly (4-week) PostgreSQL and media backup script with off-server sync support
+- [`deploy/restore_backup.sh`](file:///d:/Python/django/shop_pc/deploy/restore_backup.sh) — Backup verification and production database/media restoration script
+- [`deploy/migrate_sqlite_to_postgres.sh`](file:///d:/Python/django/shop_pc/deploy/migrate_sqlite_to_postgres.sh) — Non-destructive SQLite to PostgreSQL data migration script
 
 See [**DEPLOYMENT.md**](file:///d:/Python/django/shop_pc/DEPLOYMENT.md) for the complete step-by-step production deployment, domain setup, SSL configuration, and maintenance guide.
-
