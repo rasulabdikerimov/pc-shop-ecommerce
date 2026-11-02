@@ -4,7 +4,7 @@
 - **Repository URL**: `https://github.com/rasulabdikerimov/pc-shop-ecommerce.git`
 - **Repository Name**: `pc-shop-ecommerce`
 - **Deployed Branch**: `main`
-- **Latest Commit Hash**: Updated on `origin/main` (includes full production automation, logging, Nginx Gzip/error-page rules, 7-day daily + 4-week weekly backup rotation with off-server sync, and SQLite-to-PostgreSQL migration scripts)
+- **Latest Commit Hash**: `4ff8162e0515aa2709e8cdb19d25e385e5cef9f6` (`4ff8162` + LF normalization commit on `origin/main`)
 - **Repository Security Audit**: Verified clean — `.env`, `db.sqlite3`, `venv/`, `__pycache__/`, and private keys are excluded via [`.gitignore`](file:///d:/Python/django/shop_pc/.gitignore) and verified absent from Git history.
 
 ---
