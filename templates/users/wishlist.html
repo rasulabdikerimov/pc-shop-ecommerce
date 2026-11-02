@@ -1,0 +1,31 @@
+{% extends "shop/base.html" %}
+
+{% block title %}My Wishlist — PC Shop{% endblock %}
+
+{% block content %}
+<div class="account-layout">
+    {% include "users/partials/account_sidebar.html" with active_tab="wishlist" %}
+
+    <section>
+        <div class="card" style="margin-bottom:1.25rem;">
+            <h1 style="font-size:1.5rem; margin-bottom:0.2rem;">Saved Wishlist ({{ wishlist_items|length }})</h1>
+            <p style="margin:0; font-size:0.875rem;">Keep track of PC components for your next upgrade and add them directly to your cart.</p>
+        </div>
+
+        {% if wishlist_items %}
+            <div class="product-grid">
+                {% for item in wishlist_items %}
+                    {% include "shop/partials/product_card.html" with product=item.product %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card" style="text-align:center; padding:3rem 1.5rem;">
+                <h3>Your Wishlist is Empty</h3>
+                <p>Click the heart icon on any product card to save hardware for later.</p>
+                <a href="{% url 'shop:catalog' %}" class="btn btn-primary">Explore Hardware</a>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+

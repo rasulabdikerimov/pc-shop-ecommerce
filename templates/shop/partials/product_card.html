@@ -1,0 +1,88 @@
+{% load static %}
+<article class="product-card">
+    <div class="product-card-media">
+        <div class="product-card-badges">
+            {% if product.has_discount %}
+                <span class="badge badge-danger">-{{ product.discount_percentage }}% OFF</span>
+            {% endif %}
+            {% if product.is_featured %}
+                <span class="badge badge-primary">Featured</span>
+            {% endif %}
+            {% if not product.in_stock %}
+                <span class="badge badge-muted">Out of Stock</span>
+            {% endif %}
+        </div>
+
+        {% if user.is_authenticated %}
+            <form action="{% url 'shop:wishlist_toggle' product.id %}" method="post" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button
+                    type="submit"
+                    class="wishlist-btn-floating {% if product.id in wishlist_product_ids %}active{% endif %}"
+                    title="{% if product.id in wishlist_product_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}"
+                    aria-label="Toggle Wishlist"
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="{% if product.id in wishlist_product_ids %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
+            </form>
+        {% endif %}
+
+        <a href="{{ product.get_absolute_url }}" style="width:100%; height:100%; display:block;">
+            <img
+                src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'img/no_image.png' %}{% endif %}"
+                alt="{{ product.name }}"
+                loading="lazy"
+            >
+        </a>
+    </div>
+
+    <div class="product-card-body">
+        <div class="product-card-meta">
+            <span>{{ product.category.name }}</span>
+            {% if product.brand %}
+                <span>{{ product.brand.name }}</span>
+            {% endif %}
+        </div>
+
+        <h3 class="product-card-title">
+            <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+        </h3>
+
+        {% if product.short_specs %}
+            <p class="product-card-specs">{{ product.short_specs }}</p>
+        {% elif product.description %}
+            <p class="product-card-specs">{{ product.description|truncatechars:80 }}</p>
+        {% endif %}
+
+        <div class="product-card-rating">
+            <span>★ {{ product.average_rating|default:"5.0" }}</span>
+            <span style="color:var(--text-muted);">({{ product.review_count }} review{{ product.review_count|pluralize }})</span>
+        </div>
+
+        <div class="product-card-footer">
+            <div class="price-stack">
+                <span class="price-current">${{ product.discounted_price }}</span>
+                {% if product.has_discount %}
+                    <span class="price-original">${{ product.display_original_price }}</span>
+                {% endif %}
+            </div>
+
+            {% if product.in_stock %}
+                <form action="{% url 'cart:cart_add' product.id %}" method="post" style="margin:0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="quantity" value="1">
+                    <input type="hidden" name="update" value="False">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        Add to Cart
+                    </button>
+                </form>
+            {% else %}
+                <button type="button" class="btn btn-secondary btn-sm" disabled>Unavailable</button>
+            {% endif %}
+        </div>
+    </div>
+</article>
+

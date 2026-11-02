@@ -1,0 +1,100 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block admin_title %}Categories & Brands Management{% endblock %}
+
+{% block admin_content %}
+<h1 style="font-size:1.6rem; margin-bottom:1.25rem;">Categories &amp; Brands Management</h1>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:1.5rem;">
+    <!-- Categories Management -->
+    <div class="card">
+        <h2 style="font-size:1.2rem; margin-bottom:1rem;">Hardware Categories ({{ categories|length }})</h2>
+        <form method="post" action="{% url 'shop:admin_categories_brands' %}" style="margin-bottom:1.5rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border-color);">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="category">
+            {% for field in category_form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-sm">+ Add Category</button>
+        </form>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Slug</th>
+                        <th>Products</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in categories %}
+                    <tr>
+                        <td style="font-weight:700;">{{ c.name }}</td>
+                        <td class="mono" style="font-size:0.8rem;">{{ c.slug }}</td>
+                        <td>{{ c.products.count }}</td>
+                        <td>
+                            <form action="{% url 'shop:admin_category_delete' c.id %}" method="post" data-confirm="Delete category '{{ c.name }}'?">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Brands Management -->
+    <div class="card">
+        <h2 style="font-size:1.2rem; margin-bottom:1rem;">Hardware Brands ({{ brands|length }})</h2>
+        <form method="post" action="{% url 'shop:admin_categories_brands' %}" enctype="multipart/form-data" style="margin-bottom:1.5rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border-color);">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="brand">
+            {% for field in brand_form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-sm">+ Add Brand</button>
+        </form>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Brand</th>
+                        <th>Slug</th>
+                        <th>Products</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in brands %}
+                    <tr>
+                        <td style="font-weight:700;">{{ b.name }}</td>
+                        <td class="mono" style="font-size:0.8rem;">{{ b.slug }}</td>
+                        <td>{{ b.products.count }}</td>
+                        <td>
+                            <form action="{% url 'shop:admin_brand_delete' b.id %}" method="post" data-confirm="Delete brand '{{ b.name }}'?">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

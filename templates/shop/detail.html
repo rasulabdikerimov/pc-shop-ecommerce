@@ -1,0 +1,209 @@
+{% extends "shop/base.html" %}
+{% load static %}
+
+{% block title %}{{ product.name }} — PC Shop{% endblock %}
+
+{% block content %}
+<!-- Breadcrumbs -->
+<nav style="margin-bottom:1.25rem; font-size:0.85rem; color:var(--text-muted);" aria-label="Breadcrumb">
+    <a href="{% url 'shop:product_list' %}">Home</a> &rsaquo;
+    <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a> &rsaquo;
+    <span style="color:var(--text-primary); font-weight:600;">{{ product.name }}</span>
+</nav>
+
+<!-- Product Main Grid -->
+<div class="product-detail-grid">
+    <!-- Left Column: Product Image Showcase -->
+    <div>
+        <div class="product-gallery-main">
+            <img
+                src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'img/no_image.png' %}{% endif %}"
+                alt="{{ product.name }}"
+            >
+        </div>
+    </div>
+
+    <!-- Right Column: Product Purchase Details -->
+    <div>
+        <div class="product-info-header">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+                <a href="{{ product.category.get_absolute_url }}" class="badge badge-primary">{{ product.category.name }}</a>
+                {% if product.brand %}
+                    <span class="badge badge-muted">{{ product.brand.name }}</span>
+                {% endif %}
+                {% if product.sku %}
+                    <span class="mono" style="font-size:0.78rem; color:var(--text-muted);">SKU: {{ product.sku }}</span>
+                {% endif %}
+            </div>
+
+            <h1 style="font-size:1.75rem; margin-bottom:0.5rem;">{{ product.name }}</h1>
+
+            <div style="display:flex; align-items:center; gap:1rem; font-size:0.875rem;">
+                <span style="color:var(--warning); font-weight:700;">★ {{ product.average_rating|default:"5.0" }}</span>
+                <a href="#reviews-section" style="color:var(--text-secondary);">{{ reviews|length }} Customer Review{{ reviews|length|pluralize }}</a>
+                {% if product.in_stock %}
+                    <span class="badge badge-success">In Stock ({{ product.stock }} available)</span>
+                {% else %}
+                    <span class="badge badge-danger">Out of Stock</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Price & Discount Display -->
+        <div class="product-detail-price-box">
+            <span class="product-detail-price">${{ product.discounted_price }}</span>
+            {% if product.has_discount %}
+                <span class="product-detail-old-price">${{ product.display_original_price }}</span>
+                <span class="badge badge-danger">Save {{ product.discount_percentage }}%</span>
+            {% endif %}
+        </div>
+
+        {% if product.short_specs %}
+            <p style="font-weight:600; color:var(--text-primary); margin-bottom:0.75rem;">
+                {{ product.short_specs }}
+            </p>
+        {% endif %}
+
+        <div style="color:var(--text-secondary); margin-bottom:1.5rem;">
+            {{ product.description|linebreaks }}
+        </div>
+
+        <!-- Add to Cart & Wishlist Controls -->
+        <div style="display:flex; align-items:flex-end; gap:0.85rem; flex-wrap:wrap; padding:1.25rem; background:var(--bg-surface-alt); border-radius:var(--radius-lg); border:1px solid var(--border-color);">
+            {% if product.in_stock %}
+                <form action="{% url 'cart:cart_add' product.id %}" method="post" style="display:flex; align-items:flex-end; gap:0.75rem; flex-wrap:wrap; flex:1;">
+                    {% csrf_token %}
+                    <div style="width:110px;">
+                        <label for="id_quantity" class="form-label" style="margin-bottom:0.3rem;">Quantity</label>
+                        {{ cart_product_form.quantity }}
+                        {{ cart_product_form.update }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg" style="flex:1; min-width:180px;">
+                        Add to Shopping Cart
+                    </button>
+                </form>
+            {% else %}
+                <div style="flex:1;">
+                    <button type="button" class="btn btn-secondary btn-lg btn-block" disabled>
+                        Currently Out of Stock
+                    </button>
+                </div>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+                <form action="{% url 'shop:wishlist_toggle' product.id %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn btn-secondary btn-lg" title="Save to Wishlist">
+                        {% if in_wishlist %}
+                            ♥ Saved in Wishlist
+                        {% else %}
+                            ♡ Add to Wishlist
+                        {% endif %}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Technical Specifications & Customer Reviews -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1.75rem; margin-bottom:2.5rem;">
+    <!-- Technical Specifications -->
+    <section class="card">
+        <h2 style="font-size:1.25rem; margin-bottom:1rem;">Technical Specifications</h2>
+        {% if product.specs_list %}
+            <table class="specs-table">
+                <tbody>
+                    {% for key, val in product.specs_list %}
+                        <tr>
+                            <th>{{ key }}</th>
+                            <td>{{ val }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <table class="specs-table">
+                <tbody>
+                    <tr>
+                        <th>Category</th>
+                        <td>{{ product.category.name }}</td>
+                    </tr>
+                    {% if product.brand %}
+                    <tr>
+                        <th>Manufacturer</th>
+                        <td>{{ product.brand.name }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Availability</th>
+                        <td>{% if product.in_stock %}{{ product.stock }} units in warehouse{% else %}Out of stock{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th>Warranty</th>
+                        <td>12 Months Official Store Warranty</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% endif %}
+    </section>
+
+    <!-- Customer Reviews Section -->
+    <section id="reviews-section" class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <h2 style="font-size:1.25rem; margin:0;">Customer Reviews ({{ reviews|length }})</h2>
+            {% if user.is_authenticated %}
+                <a href="{% url 'shop:add_review' product.id %}" class="btn btn-primary btn-sm">Write a Review</a>
+            {% else %}
+                <a href="{% url 'shop:login' %}?next={{ request.path }}" class="btn btn-secondary btn-sm">Log in to Review</a>
+            {% endif %}
+        </div>
+
+        {% if reviews %}
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+                {% for review in reviews %}
+                    <div style="padding:1rem; border-radius:var(--radius-md); background:var(--bg-surface-alt); border:1px solid var(--border-color);">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-bottom:0.35rem;">
+                            <div>
+                                <strong>{{ review.title }}</strong>
+                                <span style="color:var(--warning); margin-left:0.5rem;">
+                                    ★ {{ review.rating }}/5
+                                </span>
+                            </div>
+                            <span style="font-size:0.78rem; color:var(--text-muted);">
+                                by <strong>{{ review.user.username }}</strong> &bull; {{ review.created_at|date:"M d, Y" }}
+                            </span>
+                        </div>
+                        <p style="margin:0.35rem 0 0 0; font-size:0.9rem;">{{ review.body }}</p>
+
+                        {% if user.is_authenticated and review.user_id == user.id %}
+                            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+                                <a href="{% url 'shop:edit_review' review.id %}" class="btn btn-secondary btn-sm">Edit</a>
+                                <form action="{% url 'shop:delete_review' review.id %}" method="post" data-confirm="Delete your review?">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color:var(--text-muted);">No reviews yet for this product. Be the first to share your experience!</p>
+        {% endif %}
+    </section>
+</div>
+
+<!-- Related Products -->
+{% if related_products %}
+<section>
+    <h2 style="font-size:1.35rem; margin-bottom:1rem;">Related Hardware in {{ product.category.name }}</h2>
+    <div class="product-grid">
+        {% for rel in related_products %}
+            {% include "shop/partials/product_card.html" with product=rel %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

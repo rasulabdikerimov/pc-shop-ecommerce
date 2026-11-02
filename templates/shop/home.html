@@ -1,0 +1,229 @@
+{% extends "shop/base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if category %}{{ category.name }} — PC Shop{% elif search_query %}Search "{{ search_query }}" — PC Shop{% else %}PC Shop — Custom Gaming PCs, GPUs, Processors & Peripherals{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if not category and not search_query and not has_active_filters %}
+<!-- Hero Banner on Main Storefront -->
+<section class="hero-banner">
+    <div>
+        <div class="hero-eyebrow">
+            <span>Next-Gen Hardware Store</span>
+        </div>
+        <h1 class="hero-title">Build Your Ultimate Gaming &amp; Workstation Setup</h1>
+        <p class="hero-subtitle">
+            Explore certified GeForce RTX graphics cards, AMD Ryzen 3D V-Cache processors, high-refresh OLED/IPS monitors, and pro-grade mechanical keyboards.
+        </p>
+        <div class="hero-actions">
+            <a href="{% url 'shop:catalog' %}" class="btn btn-primary btn-lg">Explore Full Catalog</a>
+            <a href="{% url 'shop:catalog' %}?on_sale=1" class="btn btn-secondary btn-lg">View Active Deals</a>
+        </div>
+        <div class="hero-stats">
+            <div>
+                <div class="hero-stat-value">100%</div>
+                <div class="hero-stat-label">Genuine Hardware</div>
+            </div>
+            <div>
+                <div class="hero-stat-value">24h</div>
+                <div class="hero-stat-label">Fast Dispatch</div>
+            </div>
+            <div>
+                <div class="hero-stat-value">Up to 3 Yrs</div>
+                <div class="hero-stat-label">Official Warranty</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-showcase-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="badge badge-danger">HOT HARDWARE DEAL</span>
+            <span class="mono" style="font-size:0.8rem; color:var(--text-muted);">IN STOCK</span>
+        </div>
+        {% if featured_products %}
+            {% with spotlight=featured_products.0 %}
+                <a href="{{ spotlight.get_absolute_url }}" style="border-radius:var(--radius-md); overflow:hidden; aspect-ratio:16/10; background:var(--bg-surface); display:block;">
+                    <img src="{% if spotlight.image %}{{ spotlight.image.url }}{% else %}{% static 'img/no_image.png' %}{% endif %}" alt="{{ spotlight.name }}" style="width:100%; height:100%; object-fit:cover;">
+                </a>
+                <div>
+                    <div style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase;">{{ spotlight.category.name }}</div>
+                    <h3 style="font-size:1.15rem; margin:0.2rem 0;"><a href="{{ spotlight.get_absolute_url }}" style="color:var(--text-primary);">{{ spotlight.name }}</a></h3>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:0.5rem;">
+                        <div>
+                            <span style="font-size:1.35rem; font-weight:800;">${{ spotlight.discounted_price }}</span>
+                            {% if spotlight.has_discount %}
+                                <span style="text-decoration:line-through; color:var(--text-muted); font-size:0.85rem; margin-left:0.4rem;">${{ spotlight.display_original_price }}</span>
+                            {% endif %}
+                        </div>
+                        <a href="{{ spotlight.get_absolute_url }}" class="btn btn-primary btn-sm">View Specs</a>
+                    </div>
+                </div>
+            {% endwith %}
+        {% endif %}
+    </div>
+</section>
+
+<!-- Active Campaigns / Promo Banner -->
+{% if active_discounts %}
+<section style="margin-bottom:2rem;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1rem;">
+        {% for discount in active_discounts %}
+            <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:1rem; border-left:4px solid var(--primary);">
+                <div>
+                    <span class="badge badge-primary" style="margin-bottom:0.35rem;">{{ discount.get_discount_Label }} CAMPAIGN</span>
+                    <h3 style="font-size:1.05rem; margin-bottom:0.2rem;">{{ discount.name }}</h3>
+                    <p style="margin:0; font-size:0.85rem;">{{ discount.description }}</p>
+                </div>
+                <a href="{% url 'shop:catalog' %}?on_sale=1" class="btn btn-secondary btn-sm">Shop Deal</a>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endif %}
+
+<!-- Catalog Section with Sidebar Filters & Product Grid -->
+<div class="catalog-layout">
+    <!-- Left Filter Sidebar -->
+    <aside class="filter-panel" aria-label="Catalog Filters">
+        <form action="{% if category %}{{ category.get_absolute_url }}{% else %}{% url 'shop:product_list' %}{% endif %}" method="get">
+            {% if search_query %}
+                <input type="hidden" name="q" value="{{ search_query }}">
+            {% endif %}
+
+            <div class="filter-group">
+                <div class="filter-title">Categories</div>
+                <ul class="filter-list">
+                    <li>
+                        <a href="{% url 'shop:product_list' %}" class="filter-link {% if not category %}active{% endif %}">
+                            <span>All Hardware</span>
+                            <span class="mono" style="font-size:0.75rem;">{{ total_catalog_count }}</span>
+                        </a>
+                    </li>
+                    {% for c in categories %}
+                        <li>
+                            <a href="{{ c.get_absolute_url }}" class="filter-link {% if category and category.slug == c.slug %}active{% endif %}">
+                                <span>{{ c.name }}</span>
+                                <span class="mono" style="font-size:0.75rem;">{{ c.product_count|default:c.products.count }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-title">Brand</div>
+                <select name="brand" class="form-control">
+                    <option value="">All Brands</option>
+                    {% for b in brands %}
+                        <option value="{{ b.slug }}" {% if selected_brand == b.slug %}selected{% endif %}>{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-title">Price Range ($)</div>
+                <div class="price-inputs-row">
+                    <div>
+                        <input type="number" name="min_price" value="{{ min_price|default:'' }}" placeholder="Min $" min="0" step="1" class="form-control">
+                    </div>
+                    <div>
+                        <input type="number" name="max_price" value="{{ max_price|default:'' }}" placeholder="Max $" min="0" step="1" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-title">Availability &amp; Offers</div>
+                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.875rem; margin-bottom:0.5rem; cursor:pointer;">
+                    <input type="checkbox" name="in_stock" value="1" {% if in_stock_only %}checked{% endif %}>
+                    <span>In Stock Only</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.875rem; cursor:pointer;">
+                    <input type="checkbox" name="on_sale" value="1" {% if on_sale_only %}checked{% endif %}>
+                    <span>Discounted Items</span>
+                </label>
+            </div>
+
+            {% if current_sort %}
+                <input type="hidden" name="sort" value="{{ current_sort }}">
+            {% endif %}
+
+            <div style="display:flex; gap:0.5rem;">
+                <button type="submit" class="btn btn-primary btn-sm btn-block">Apply Filters</button>
+                <a href="{% if category %}{{ category.get_absolute_url }}{% else %}{% url 'shop:product_list' %}{% endif %}" class="btn btn-secondary btn-sm">Reset</a>
+            </div>
+        </form>
+    </aside>
+
+    <!-- Right Main Catalog Area -->
+    <section>
+        <div class="catalog-toolbar">
+            <div>
+                <h2 style="font-size:1.25rem; margin:0;">
+                    {% if category %}
+                        {{ category.name }}
+                    {% elif search_query %}
+                        Search Results for "{{ search_query }}"
+                    {% else %}
+                        PC Hardware Catalog
+                    {% endif %}
+                </h2>
+                <div class="catalog-count">
+                    Showing <strong>{{ products|length }}</strong> of <strong>{{ total_filtered_count|default:products|length }}</strong> product{{ total_filtered_count|default:products|length|pluralize }}
+                </div>
+            </div>
+
+            <form method="get" class="sort-controls">
+                {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+                {% if selected_brand %}<input type="hidden" name="brand" value="{{ selected_brand }}">{% endif %}
+                {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
+                {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
+                {% if in_stock_only %}<input type="hidden" name="in_stock" value="1">{% endif %}
+                {% if on_sale_only %}<input type="hidden" name="on_sale" value="1">{% endif %}
+                <label for="sort-select" style="font-size:0.85rem; color:var(--text-secondary); white-space:nowrap;">Sort by:</label>
+                <select id="sort-select" name="sort" class="form-control" style="width:auto; min-width:175px;" onchange="this.form.submit()">
+                    <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                    <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+                    <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>Name: A – Z</option>
+                </select>
+            </form>
+        </div>
+
+        {% if products %}
+            <div class="product-grid">
+                {% for product in products %}
+                    {% include "shop/partials/product_card.html" with product=product %}
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj and page_obj.paginator.num_pages > 1 %}
+                <nav class="pagination" aria-label="Catalog Pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if filter_querystring %}&amp;{{ filter_querystring }}{% endif %}" class="page-link">&laquo; Prev</a>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        <a href="?page={{ num }}{% if filter_querystring %}&amp;{{ filter_querystring }}{% endif %}" class="page-link {% if page_obj.number == num %}active{% endif %}">
+                            {{ num }}
+                        </a>
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if filter_querystring %}&amp;{{ filter_querystring }}{% endif %}" class="page-link">Next &raquo;</a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="card" style="text-align:center; padding:3rem 1.5rem;">
+                <h3 style="margin-bottom:0.5rem;">No Matching Hardware Found</h3>
+                <p>Try adjusting your search keywords, price range, or selected filters.</p>
+                <a href="{% url 'shop:product_list' %}" class="btn btn-primary">Reset All Filters</a>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

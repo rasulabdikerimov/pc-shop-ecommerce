@@ -1,0 +1,77 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block admin_title %}Customer Management{% endblock %}
+
+{% block admin_content %}
+<div style="margin-bottom:1.5rem;">
+    <h1 style="font-size:1.6rem; margin-bottom:0.2rem;">Customer Management ({{ customers|length }})</h1>
+    <p style="margin:0; font-size:0.875rem;">Inspect registered customer profiles, total purchases, review activity, and account status.</p>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem; padding:1rem;">
+    <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <input type="text" name="q" value="{{ search_q }}" placeholder="Search username, email, name, or phone..." class="form-control" style="max-width:340px;">
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+        <a href="{% url 'shop:admin_customers' %}" class="btn btn-secondary btn-sm">Reset</a>
+    </form>
+</div>
+
+<div class="card" style="padding:0; overflow:hidden;">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Email / Phone</th>
+                    <th>Joined</th>
+                    <th>Orders</th>
+                    <th>Total Purchases</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in customers %}
+                <tr>
+                    <td>
+                        <a href="{% url 'shop:admin_customer_detail' c.id %}" style="font-weight:700;">@{{ c.username }}</a>
+                        <div style="font-size:0.78rem; color:var(--text-muted);">{{ c.full_name }}</div>
+                    </td>
+                    <td>
+                        <div>{{ c.email|default:"—" }}</div>
+                        <div style="font-size:0.76rem; color:var(--text-muted);">{{ c.phone_num|default:"" }}</div>
+                    </td>
+                    <td>{{ c.date_joined|date:"M d, Y" }}</td>
+                    <td>{{ c.order_count|default:c.total_orders_count }}</td>
+                    <td style="font-weight:700;">${{ c.total_spent }}</td>
+                    <td>
+                        {% if c.is_active %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-danger">Deactivated</span>
+                        {% endif %}
+                        {% if c.is_staff %}
+                            <span class="badge badge-primary">Staff</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:0.4rem;">
+                            <a href="{% url 'shop:admin_customer_detail' c.id %}" class="btn btn-secondary btn-sm">Details</a>
+                            {% if c.id != user.id %}
+                            <form action="{% url 'shop:admin_customer_toggle_active' c.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn {% if c.is_active %}btn-outline-danger{% else %}btn-primary{% endif %} btn-sm">
+                                    {% if c.is_active %}Deactivate{% else %}Activate{% endif %}
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

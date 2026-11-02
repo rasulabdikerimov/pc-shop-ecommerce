@@ -1,0 +1,16 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Signed Out — PC Shop{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="card" style="text-align:center; padding:2.5rem 1.75rem;">
+        <h1 style="font-size:1.5rem; margin-bottom:0.5rem;">You Have Been Signed Out</h1>
+        <p style="margin-bottom:1.5rem;">Thank you for visiting PC Shop. Your session has been safely closed.</p>
+        <div style="display:flex; justify-content:center; gap:0.75rem;">
+            <a href="{% url 'shop:login' %}" class="btn btn-primary">Sign In Again</a>
+            <a href="{% url 'shop:product_list' %}" class="btn btn-secondary">Return to Store</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

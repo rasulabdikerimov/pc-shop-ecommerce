@@ -1,0 +1,99 @@
+{% extends "admin_panel/base_admin.html" %}
+{% load static %}
+
+{% block admin_title %}Products & Inventory Management{% endblock %}
+
+{% block admin_content %}
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+        <h1 style="font-size:1.6rem; margin-bottom:0.2rem;">Products &amp; Inventory ({{ products|length }})</h1>
+        <p style="margin:0; font-size:0.875rem;">Add new hardware, update stock levels, manage pricing, and control catalog visibility.</p>
+    </div>
+    <div style="display:flex; gap:0.65rem;">
+        <a href="{% url 'shop:admin_categories_brands' %}" class="btn btn-secondary btn-sm">Categories &amp; Brands</a>
+        <a href="{% url 'shop:admin_product_add' %}" class="btn btn-primary btn-sm">+ Add New Product</a>
+    </div>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="card" style="margin-bottom:1.25rem; padding:1rem;">
+    <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+        <input type="text" name="q" value="{{ search_q }}" placeholder="Search by product name or SKU..." class="form-control" style="max-width:300px;">
+        <select name="category" class="form-control" style="max-width:200px;">
+            <option value="">All Categories</option>
+            {% for c in categories %}
+                <option value="{{ c.slug }}" {% if selected_cat == c.slug %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="{% url 'shop:admin_products' %}" class="btn btn-secondary btn-sm">Reset</a>
+    </form>
+</div>
+
+<div class="card" style="padding:0; overflow:hidden;">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category / Brand</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <img src="{% if p.image %}{{ p.image.url }}{% else %}{% static 'img/no_image.png' %}{% endif %}" alt="{{ p.name }}" style="width:48px; height:38px; object-fit:cover; border-radius:4px;">
+                            <div>
+                                <a href="{{ p.get_absolute_url }}" style="font-weight:700; color:var(--text-primary);">{{ p.name }}</a>
+                                {% if p.sku %}<div class="mono" style="font-size:0.74rem; color:var(--text-muted);">{{ p.sku }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div>{{ p.category.name }}</div>
+                        <div style="font-size:0.76rem; color:var(--text-muted);">{{ p.brand.name|default:"—" }}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight:700;">${{ p.discounted_price }}</div>
+                        {% if p.has_discount %}
+                            <div style="font-size:0.75rem; color:var(--danger-text);">Base: ${{ p.display_original_price }} (-{{ p.discount_percentage }}%)</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if p.stock > 5 %}badge-success{% elif p.stock > 0 %}badge-warning{% else %}badge-danger{% endif %}">
+                            {{ p.stock }} in stock
+                        </span>
+                    </td>
+                    <td>
+                        <form action="{% url 'shop:admin_product_toggle' p.id %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="badge {% if p.available %}badge-success{% else %}badge-muted{% endif %}" style="border:none; cursor:pointer;">
+                                {% if p.available %}Active{% else %}Hidden{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:0.4rem;">
+                            <a href="{% url 'shop:admin_product_edit' p.id %}" class="btn btn-secondary btn-sm">Edit</a>
+                            <form action="{% url 'shop:admin_product_delete' p.id %}" method="post" data-confirm="Delete product '{{ p.name }}'?">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="text-align:center; padding:2rem;">No products found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

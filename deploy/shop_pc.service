@@ -1,0 +1,23 @@
+[Unit]
+Description=Gunicorn daemon for PC Shop Django E-Commerce Platform
+After=network.target postgresql.service
+
+[Service]
+User=www-data
+Group=www-data
+RuntimeDirectory=gunicorn
+WorkingDirectory=/var/www/shop_pc
+EnvironmentFile=/var/www/shop_pc/.env
+ExecStart=/var/www/shop_pc/venv/bin/gunicorn \
+    --config /var/www/shop_pc/deploy/gunicorn.conf.py \
+    config.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+

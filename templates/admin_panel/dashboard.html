@@ -1,0 +1,317 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block admin_title %}Executive Dashboard & Analytics{% endblock %}
+
+{% block admin_content %}
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+        <h1 style="font-size:1.75rem; margin-bottom:0.2rem;">Executive Dashboard &amp; Analytics</h1>
+        <p style="margin:0; font-size:0.9rem;">Real-time store telemetry, revenue metrics, inventory health, and customer activity.</p>
+    </div>
+    <div style="display:flex; gap:0.65rem;">
+        <a href="{% url 'shop:admin_product_add' %}" class="btn btn-primary btn-sm">+ New Product</a>
+        <a href="{% url 'shop:admin_discounts' %}" class="btn btn-secondary btn-sm">Manage Discounts</a>
+    </div>
+</div>
+
+<!-- 8 KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <span class="kpi-label">Total Revenue</span>
+        <span class="kpi-value">${{ total_revenue }}</span>
+        <span style="font-size:0.78rem; color:var(--success-text);">Excludes cancelled orders</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Total Orders</span>
+        <span class="kpi-value">{{ total_orders }}</span>
+        <span style="font-size:0.78rem; color:var(--text-muted);">{{ pending_orders }} Pending &bull; {{ completed_orders }} Delivered</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Registered Customers</span>
+        <span class="kpi-value">{{ total_customers }}</span>
+        <span style="font-size:0.78rem; color:var(--text-muted);">Active accounts</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Catalog Products</span>
+        <span class="kpi-value">{{ total_products }}</span>
+        <span style="font-size:0.78rem; color:var(--text-muted);">{{ active_discounts_count }} Active Discounts</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Customer Reviews</span>
+        <span class="kpi-value">{{ total_reviews }}</span>
+        <span style="font-size:0.78rem; color:var(--text-muted);">Verified ratings</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Pending Orders</span>
+        <span class="kpi-value" style="color:var(--warning-text);">{{ pending_orders }}</span>
+        <a href="{% url 'shop:admin_orders' %}?status=pending" style="font-size:0.78rem;">Process queue &rarr;</a>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Completed Orders</span>
+        <span class="kpi-value" style="color:var(--success-text);">{{ completed_orders }}</span>
+        <a href="{% url 'shop:admin_orders' %}?status=delivered" style="font-size:0.78rem;">View delivered &rarr;</a>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Active Promo Codes</span>
+        <span class="kpi-value">{{ active_promos_count }}</span>
+        <a href="{% url 'shop:admin_discounts' %}" style="font-size:0.78rem;">View usage &rarr;</a>
+    </div>
+</div>
+
+<!-- Real Database Analytics Charts (6 Charts in 3x2 Responsive Grid) -->
+<div class="charts-grid">
+    <div class="card">
+        <h3 style="font-size:1rem; margin-bottom:0.75rem;">Revenue Over Time ($)</h3>
+        <canvas id="chart-revenue" height="200"></canvas>
+    </div>
+    <div class="card">
+        <h3 style="font-size:1rem; margin-bottom:0.75rem;">Orders Over Time</h3>
+        <canvas id="chart-orders" height="200"></canvas>
+    </div>
+    <div class="card">
+        <h3 style="font-size:1rem; margin-bottom:0.75rem;">Best-Selling Products (Units Sold)</h3>
+        <canvas id="chart-bestsellers" height="200"></canvas>
+    </div>
+    <div class="card">
+        <h3 style="font-size:1rem; margin-bottom:0.75rem;">Category Performance (Revenue $)</h3>
+        <canvas id="chart-categories" height="200"></canvas>
+    </div>
+    <div class="card">
+        <h3 style="font-size:1rem; margin-bottom:0.75rem;">Customer Registrations Over Time</h3>
+        <canvas id="chart-registrations" height="200"></canvas>
+    </div>
+    <div class="card">
+        <h3 style="font-size:1rem; margin-bottom:0.75rem;">Promotional Code Usage</h3>
+        <canvas id="chart-promos" height="200"></canvas>
+    </div>
+</div>
+
+<!-- Recent Orders, Best-Selling Products & Recent Registrations Tables -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:1.5rem; margin-bottom:1.5rem;">
+    <!-- Recent Purchases -->
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h2 style="font-size:1.1rem; margin:0;">Recent Purchases</h2>
+            <a href="{% url 'shop:admin_orders' %}" style="font-size:0.82rem;">All Orders &rarr;</a>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in recent_orders %}
+                    <tr>
+                        <td class="mono"><a href="{% url 'shop:admin_order_detail' o.order_number %}">{{ o.order_number }}</a></td>
+                        <td>{{ o.customer_full_name }}</td>
+                        <td style="font-weight:700;">${{ o.total_amount }}</td>
+                        <td><span class="badge badge-primary">{{ o.get_status_display }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4">No orders recorded yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Best-Selling Products -->
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h2 style="font-size:1.1rem; margin:0;">Best-Selling Hardware</h2>
+            <a href="{% url 'shop:admin_products' %}" style="font-size:0.82rem;">Inventory &rarr;</a>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Sold</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in best_selling_products %}
+                    <tr>
+                        <td><a href="{% url 'shop:admin_product_edit' p.id %}" style="font-weight:600;">{{ p.name|truncatechars:32 }}</a></td>
+                        <td>${{ p.discounted_price }}</td>
+                        <td>
+                            <span class="badge {% if p.stock > 5 %}badge-success{% elif p.stock > 0 %}badge-warning{% else %}badge-danger{% endif %}">
+                                {{ p.stock }}
+                            </span>
+                        </td>
+                        <td style="font-weight:700;">{{ p.sales_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Customer Registrations & Audit Logs -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:1.5rem;">
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h2 style="font-size:1.1rem; margin:0;">Recent Customer Registrations</h2>
+            <a href="{% url 'shop:admin_customers' %}" style="font-size:0.82rem;">All Customers &rarr;</a>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in recent_customers %}
+                    <tr>
+                        <td><a href="{% url 'shop:admin_customer_detail' u.id %}" style="font-weight:600;">@{{ u.username }}</a></td>
+                        <td>{{ u.email|default:"—" }}</td>
+                        <td>{{ u.date_joined|date:"M d, Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size:1.1rem; margin-bottom:1rem;">Recent Administrative Audit Log</h2>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Staff</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in audit_logs %}
+                    <tr>
+                        <td style="font-size:0.78rem; color:var(--text-muted);">{{ log.created_at|date:"M d H:i" }}</td>
+                        <td style="font-weight:600;">{{ log.user.username|default:"system" }}</td>
+                        <td style="font-size:0.85rem;">{{ log.action }} ({{ log.target_model }})</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" style="color:var(--text-muted);">No administrative operations logged yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{{ chart_data_json|json_script:"admin-analytics-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/**
+ * Lightweight Vanilla HTML5 Canvas Chart Renderer for Admin Analytics
+ * Renders real database series and adapts automatically to Light / Dark themes.
+ */
+(function() {
+    const dataEl = document.getElementById('admin-analytics-data');
+    if (!dataEl) return;
+    const chartData = JSON.parse(dataEl.textContent);
+
+    function getThemePalette() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        return {
+            text: isDark ? '#cbd5e1' : '#475569',
+            grid: isDark ? '#1e293b' : '#e2e8f0',
+            primary: '#3b82f6',
+            secondary: '#10b981',
+            accent: '#8b5cf6',
+            warning: '#f59e0b',
+            rose: '#f43f5e',
+            cyan: '#06b6d4'
+        };
+    }
+
+    function drawBarChart(canvasId, labels, values, colorKey, prefix) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const palette = getThemePalette();
+        const barColor = palette[colorKey] || palette.primary;
+
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const width = rect.width || 420;
+        const height = 200;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, width, height);
+
+        const padLeft = 48, padRight = 16, padTop = 20, padBottom = 38;
+        const plotW = width - padLeft - padRight;
+        const plotH = height - padTop - padBottom;
+        const maxVal = Math.max(...values, 1);
+
+        // Horizontal grid lines
+        ctx.strokeStyle = palette.grid;
+        ctx.fillStyle = palette.text;
+        ctx.font = '11px Inter, sans-serif';
+        ctx.lineWidth = 1;
+
+        for (let i = 0; i <= 4; i++) {
+            const y = padTop + plotH - (i / 4) * plotH;
+            ctx.beginPath();
+            ctx.moveTo(padLeft, y);
+            ctx.lineTo(width - padRight, y);
+            ctx.stroke();
+
+            const labelVal = Math.round((maxVal * i) / 4);
+            ctx.fillText((prefix || '') + labelVal, 4, y + 4);
+        }
+
+        const count = Math.max(labels.length, 1);
+        const slotW = plotW / count;
+        const barW = Math.min(38, Math.max(12, slotW * 0.58));
+
+        labels.forEach(function(lbl, idx) {
+            const val = values[idx] || 0;
+            const barH = Math.max(3, (val / maxVal) * plotH);
+            const x = padLeft + idx * slotW + (slotW - barW) / 2;
+            const y = padTop + plotH - barH;
+
+            ctx.fillStyle = barColor;
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(x, y, barW, barH, 4) : ctx.rect(x, y, barW, barH);
+            ctx.fill();
+
+            ctx.fillStyle = palette.text;
+            ctx.textAlign = 'center';
+            const shortLbl = String(lbl).length > 10 ? String(lbl).slice(0, 9) + '…' : String(lbl);
+            ctx.fillText(shortLbl, x + barW / 2, height - 12);
+        });
+    }
+
+    function renderAllCharts() {
+        drawBarChart('chart-revenue', chartData.revenue.labels, chartData.revenue.values, 'primary', '$');
+        drawBarChart('chart-orders', chartData.orders.labels, chartData.orders.values, 'secondary', '');
+        drawBarChart('chart-bestsellers', chartData.bestsellers.labels, chartData.bestsellers.values, 'accent', '');
+        drawBarChart('chart-categories', chartData.categories.labels, chartData.categories.values, 'warning', '$');
+        drawBarChart('chart-registrations', chartData.registrations.labels, chartData.registrations.values, 'cyan', '');
+        drawBarChart('chart-promos', chartData.promos.labels, chartData.promos.values, 'rose', '');
+    }
+
+    renderAllCharts();
+    window.addEventListener('resize', renderAllCharts);
+    window.addEventListener('pcshop:themechange', renderAllCharts);
+})();
+</script>
+{% endblock %}
+

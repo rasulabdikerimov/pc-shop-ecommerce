@@ -1,0 +1,16 @@
+{% extends "shop/base.html" %}
+{% block title %}Page Not Found (404) — PC Shop{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px; margin:3rem auto; text-align:center; padding:3rem 2rem;">
+    <div class="badge badge-danger mono" style="margin-bottom:1rem; font-size:0.9rem;">ERROR 404</div>
+    <h1 style="font-size:2rem; margin-bottom:0.75rem;">Hardware Component Not Found</h1>
+    <p style="margin-bottom:1.75rem;">
+        The page or product you are looking for might have been moved, renamed, or is temporarily unavailable.
+    </p>
+    <div style="display:flex; justify-content:center; gap:0.85rem; flex-wrap:wrap;">
+        <a href="{% url 'shop:product_list' %}" class="btn btn-primary">Back to Homepage</a>
+        <a href="{% url 'shop:catalog' %}" class="btn btn-secondary">Browse Full Catalog</a>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,75 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block admin_title %}Review Moderation{% endblock %}
+
+{% block admin_content %}
+<div style="margin-bottom:1.5rem;">
+    <h1 style="font-size:1.6rem; margin-bottom:0.2rem;">Customer Review Moderation ({{ reviews|length }})</h1>
+    <p style="margin:0; font-size:0.875rem;">Search, filter by rating, approve/hide, or delete inappropriate product reviews.</p>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem; padding:1rem;">
+    <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <input type="text" name="q" value="{{ search_q }}" placeholder="Search review text, author, or product..." class="form-control" style="max-width:320px;">
+        <select name="rating" class="form-control" style="max-width:160px;">
+            <option value="">All Ratings</option>
+            {% for r_val, r_lbl in rating_choices %}
+                <option value="{{ r_val }}" {% if selected_rating == r_val|stringformat:"s" %}selected{% endif %}>{{ r_lbl }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="{% url 'shop:admin_reviews' %}" class="btn btn-secondary btn-sm">Reset</a>
+    </form>
+</div>
+
+<div class="card" style="padding:0; overflow:hidden;">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Author</th>
+                    <th>Product</th>
+                    <th>Rating &amp; Review</th>
+                    <th>Date</th>
+                    <th>Moderation</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rev in reviews %}
+                <tr>
+                    <td>
+                        <a href="{% url 'shop:admin_customer_detail' rev.user.id %}" style="font-weight:700;">@{{ rev.user.username }}</a>
+                    </td>
+                    <td>
+                        <a href="{{ rev.product.get_absolute_url }}" style="font-weight:600;">{{ rev.product.name }}</a>
+                    </td>
+                    <td>
+                        <div style="color:var(--warning); font-weight:700;">★ {{ rev.rating }}/5 — <span style="color:var(--text-primary);">{{ rev.title }}</span></div>
+                        <div style="font-size:0.82rem; color:var(--text-secondary);">{{ rev.body|truncatechars:110 }}</div>
+                    </td>
+                    <td>{{ rev.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        <form action="{% url 'shop:admin_review_toggle' rev.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="badge {% if rev.is_approved %}badge-success{% else %}badge-warning{% endif %}" style="border:none; cursor:pointer;">
+                                {% if rev.is_approved %}Approved{% else %}Hidden{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <form action="{% url 'shop:admin_review_delete' rev.id %}" method="post" data-confirm="Delete this review permanently?">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="text-align:center; padding:2rem;">No matching reviews found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

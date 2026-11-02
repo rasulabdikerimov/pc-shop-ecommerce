@@ -1,0 +1,145 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block admin_title %}Discounts & Promotional Codes{% endblock %}
+
+{% block admin_content %}
+<h1 style="font-size:1.6rem; margin-bottom:0.25rem;">Discounts &amp; Promotional Codes</h1>
+<p style="font-size:0.875rem; margin-bottom:1.5rem;">Manage product/category discount campaigns and server-validated checkout promotional codes.</p>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(380px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
+    <!-- Create / Manage Discount Campaigns -->
+    <div class="card">
+        <h2 style="font-size:1.2rem; margin-bottom:1rem;">Create Product / Category Discount Campaign</h2>
+        <form method="post" action="{% url 'shop:admin_discounts' %}">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="discount">
+            {% for field in discount_form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-sm">+ Create Discount Campaign</button>
+        </form>
+    </div>
+
+    <!-- Create Promotional Code -->
+    <div class="card">
+        <h2 style="font-size:1.2rem; margin-bottom:1rem;">Create Checkout Promotional Code</h2>
+        <form method="post" action="{% url 'shop:admin_discounts' %}">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="promo">
+            {% for field in promo_form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-sm">+ Create Promo Code</button>
+        </form>
+    </div>
+</div>
+
+<!-- Existing Discount Campaigns Table -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1.15rem; margin-bottom:1rem;">Active &amp; Scheduled Discount Campaigns ({{ discounts|length }})</h2>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Campaign Name</th>
+                    <th>Type &amp; Value</th>
+                    <th>Scope</th>
+                    <th>Validity</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in discounts %}
+                <tr>
+                    <td style="font-weight:700;">{{ d.name }}</td>
+                    <td><span class="badge badge-primary">{{ d.get_discount_Label }}</span></td>
+                    <td style="font-size:0.82rem;">
+                        {{ d.categories.count }} Categor{{ d.categories.count|pluralize:"y,ies" }},
+                        {{ d.products.count }} Product{{ d.products.count|pluralize }}
+                    </td>
+                    <td style="font-size:0.8rem;">
+                        {{ d.start_date|date:"Y-m-d" }} &rarr; {{ d.end_date|date:"Y-m-d"|default:"No Expiry" }}
+                    </td>
+                    <td>
+                        <form action="{% url 'shop:admin_discount_toggle' d.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="badge {% if d.is_active %}badge-success{% else %}badge-muted{% endif %}" style="border:none; cursor:pointer;">
+                                {% if d.is_active %}Active{% else %}Inactive{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <form action="{% url 'shop:admin_discount_delete' d.id %}" method="post" data-confirm="Delete discount '{{ d.name }}'?">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6">No discount campaigns configured.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Existing Promo Codes Table -->
+<div class="card">
+    <h2 style="font-size:1.15rem; margin-bottom:1rem;">Promotional Codes &amp; Usage Statistics ({{ promo_codes|length }})</h2>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Discount</th>
+                    <th>Min Order</th>
+                    <th>Usage</th>
+                    <th>Expires</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in promo_codes %}
+                <tr>
+                    <td class="mono" style="font-weight:800;">{{ p.code }}</td>
+                    <td><span class="badge badge-primary">{{ p.get_discount_display_label }}</span></td>
+                    <td>${{ p.min_order_amount }}</td>
+                    <td style="font-weight:700;">{{ p.used_count }} / {{ p.usage_limit|default:"∞" }}</td>
+                    <td style="font-size:0.8rem;">
+                        {{ p.valid_until|date:"Y-m-d"|default:"Never" }}
+                        {% if p.is_expired %}<span class="badge badge-danger">Expired</span>{% endif %}
+                    </td>
+                    <td>
+                        <form action="{% url 'shop:admin_promo_toggle' p.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="badge {% if p.is_active and not p.is_expired %}badge-success{% else %}badge-muted{% endif %}" style="border:none; cursor:pointer;">
+                                {% if p.is_active %}Active{% else %}Inactive{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <form action="{% url 'shop:admin_promo_delete' p.id %}" method="post" data-confirm="Delete promo code '{{ p.code }}'?">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7">No promotional codes configured.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

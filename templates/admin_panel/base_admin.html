@@ -1,0 +1,71 @@
+{% extends "shop/base.html" %}
+{% load static %}
+
+{% block title %}{% block admin_title %}Admin Control Panel{% endblock %} — PC Shop{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <!-- Admin Sidebar -->
+    <aside class="sidebar-menu" aria-label="Administration Sidebar">
+        <div style="padding-bottom:0.85rem; margin-bottom:0.85rem; border-bottom:1px solid var(--border-color);">
+            <span class="badge badge-primary" style="margin-bottom:0.35rem;">STAFF PORTAL</span>
+            <h2 style="font-size:1.1rem; margin:0;">Store Administration</h2>
+            <div style="font-size:0.76rem; color:var(--text-muted);">Signed in as @{{ user.username }}</div>
+        </div>
+
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{% url 'shop:admin_dashboard' %}" class="sidebar-nav-link {% if admin_section == 'dashboard' %}active{% endif %}">
+                    <span>Overview &amp; Analytics</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'shop:admin_products' %}" class="sidebar-nav-link {% if admin_section == 'products' %}active{% endif %}">
+                    <span>Products &amp; Inventory</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'shop:admin_categories_brands' %}" class="sidebar-nav-link {% if admin_section == 'categories' %}active{% endif %}">
+                    <span>Categories &amp; Brands</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'shop:admin_orders' %}" class="sidebar-nav-link {% if admin_section == 'orders' %}active{% endif %}">
+                    <span>Order Management</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'shop:admin_customers' %}" class="sidebar-nav-link {% if admin_section == 'customers' %}active{% endif %}">
+                    <span>Customer Accounts</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'shop:admin_reviews' %}" class="sidebar-nav-link {% if admin_section == 'reviews' %}active{% endif %}">
+                    <span>Review Moderation</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'shop:admin_discounts' %}" class="sidebar-nav-link {% if admin_section == 'discounts' %}active{% endif %}">
+                    <span>Discounts &amp; Promo Codes</span>
+                </a>
+            </li>
+            <li style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid var(--border-color);">
+                <a href="/admin/" class="sidebar-nav-link" style="font-size:0.82rem; color:var(--text-muted);">
+                    <span>Native Django Admin &nearr;</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'shop:product_list' %}" class="sidebar-nav-link" style="font-size:0.82rem;">
+                    <span>&larr; Return to Storefront</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Admin Main Content -->
+    <section>
+        {% block admin_content %}{% endblock %}
+    </section>
+</div>
+{% endblock %}
+

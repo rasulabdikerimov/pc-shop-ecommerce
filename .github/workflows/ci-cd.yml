@@ -1,0 +1,71 @@
+name: Django CI & Production Deployment
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Automated Django Test Suite & System Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Django System & Migration Checks
+        env:
+          DEBUG: "True"
+          DB_ENGINE: "sqlite3"
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+
+      - name: Execute Automated Unit & Integration Tests
+        env:
+          DEBUG: "True"
+          DB_ENGINE: "sqlite3"
+        run: |
+          python manage.py test -v 2
+
+  deploy:
+    name: Deploy to Production VPS (Conditional on SSH Secrets)
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.SSH_HOST != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Remote Production Update over SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          ssh "$SSH_USER@$SSH_HOST" << 'EOF'
+            set -e
+            cd /var/www/shop_pc
+            git fetch origin main
+            git reset --hard origin/main
+            ./venv/bin/pip install -r requirements.txt
+            ./venv/bin/python manage.py migrate --noinput
+            ./venv/bin/python manage.py collectstatic --noinput
+            sudo systemctl restart shop_pc.service
+            sudo systemctl reload nginx
+          EOF
