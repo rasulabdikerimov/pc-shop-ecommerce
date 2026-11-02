@@ -89,3 +89,4 @@ Because purchasing a VPS and registering a `.uz` domain require your personal pa
      git clone https://github.com/rasulabdikerimov/pc-shop-ecommerce.git /var/www/shop_pc
      sudo bash /var/www/shop_pc/deploy/provision_and_deploy.sh gshoptest.uz admin@gshoptest.uz
      ```
+

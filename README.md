@@ -123,3 +123,4 @@ Complete production configuration files are located in the [`deploy/`](file:///d
 - [`deploy/backup_db.sh`](file:///d:/Python/django/shop_pc/deploy/backup_db.sh) — Automated daily PostgreSQL and media backup script
 
 See [**DEPLOYMENT.md**](file:///d:/Python/django/shop_pc/DEPLOYMENT.md) for the complete step-by-step production deployment, domain setup, SSL configuration, and maintenance guide.
+
